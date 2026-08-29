@@ -155,18 +155,17 @@ class BenchmarkSpecification(BaseModel):
 
 
 class Settings(BaseSettings):
-    model: str = Field(description="Hugging Face model ID, or path to model on disk.")
+    model: str = Field(description="Hugging Face模型ID或檔案路徑。")
 
     model_commit: str | None = Field(
         default=None,
-        description="Hugging Face commit hash of the model.",
+        description="Hugging Face上這個模型的commit hash。",
     )
 
     evaluate_model: str | None = Field(
         default=None,
         description=(
-            "If this model ID or path is set, then instead of abliterating the main model, "
-            "evaluate this model relative to the main model."
+            "存在這個的時候，不消融，改為評估。"
         ),
         exclude=True,
     )
@@ -174,9 +173,7 @@ class Settings(BaseSettings):
     collect_reproducibles: str | None = Field(
         default=None,
         description=(
-            "If this directory path is set, then instead of abliterating a model, "
-            "download all reproduce.json files from public Heretic model repositories "
-            "on Hugging Face, and store them in that directory for archival purposes."
+            "存在這個的時候，不消融，改為從Hugging Face的公共Heretic模型庫上下載所有的reproduce.json並儲存至該資料夾。"
         ),
         exclude=True,
     )
@@ -184,43 +181,37 @@ class Settings(BaseSettings):
     reproduce: str | None = Field(
         default=None,
         description=(
-            "If this path or URL to a reproduce.json file is set, load reproduction information "
-            "from that file, and attempt to reproduce the abliterated model it originated from."
+            "當設定指向reproduce.json的路徑或URL時，將會從該檔案載入重現資訊並嘗試重現該檔案的模型。"
         ),
         exclude=True,
     )
 
     dtypes: list[str] = Field(
         default=[
-            # In practice, "auto" almost always means bfloat16.
+            # 通常而言，"auto"指bfloat16。
             "auto",
-            # If that doesn't work (e.g. on pre-Ampere hardware), fall back to float16.
+            # 出錯時(例如pre-Ampere hardware)，到這裡。
             "float16",
-            # If "auto" resolves to float32, and that fails because it is too large,
-            # and float16 fails due to range issues, try bfloat16.
+            # 如果"auto"指float32且因為太大而失敗且float16也因為數值範圍問題而失敗時，嘗試使用bfloat16。
             "bfloat16",
-            # If neither of those work, fall back to float32 (which will of course fail
-            # if that was the dtype "auto" resolved to).
+            # 如果上述方法都不管用，則退回使用 float32（當然，如果當初"auto"就是指這個的話這次也基本可以肯定會失敗）。
             "float32",
         ],
         description=(
-            "List of PyTorch dtypes to try when loading model tensors. "
-            "If loading with a dtype fails, the next dtype in the list will be tried."
+            "載入模型張量時要嘗試的PyTorch資料類型列表。如果使用某個資料類型載入失敗系統將會嘗試列表中的下一個資料類型。"
         ),
     )
 
     quantization: QuantizationMethod = Field(
         default=QuantizationMethod.NONE,
         description=(
-            "Quantization method to use when loading the model. Options: "
-            '"none" (no quantization), '
-            '"bnb_4bit" (4-bit quantization using bitsandbytes).'
+            "量化方式(載入時，選項：\"none\" (不量化)、\"bnb_4bit\" (使用bitsandbytes進行的4-bit量化).)"
         ),
     )
 
     device_map: str | Dict[str, int | str] = Field(
         default="auto",
-        description="Device map to pass to Accelerate when loading the model.",
+        description="載入模型時，要傳遞給Accelerate的裝置映射表(如何拆，ex.第0到10層放cuda:0，第11到20層放cuda:1，其餘放cpu)",
     )
 
     max_memory: Dict[str, str] | None = Field(
