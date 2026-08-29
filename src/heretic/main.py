@@ -5,7 +5,7 @@
 
 import sys
 
-# Ensure standard output/error use UTF-8 instead of system default charmap (e.g. cp1252 on Windows).
+# Ensure standard output/error use UTF-8 instead of system default charmap (e.g. cp1252 on Windows).確保UTF-8
 for stream in (sys.stdout, sys.stderr):
     if (
         hasattr(stream, "reconfigure")
@@ -16,7 +16,7 @@ for stream in (sys.stdout, sys.stderr):
 from .config import Settings
 
 
-def _is_help_invocation() -> bool:
+def _is_help_invocation() -> bool:#使用者是否輸入-h之類的
     args = sys.argv[1:]
     return "-h" in args or "--help" in args
 
