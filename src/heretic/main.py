@@ -93,14 +93,12 @@ from .utils import (
 )
 
 
-def obtain_export_strategy(
+def obtain_export_strategy(#匯出方法
     settings: Settings,
     model: Model,
 ) -> ExportStrategy | None:
     """
-    Gets the export strategy from settings or prompts the user.
-    Provides info to the user if the model is quantized on memory use.
-    Returns an export strategy, or None if cancelled.
+    有量化和正常、權重和Adapter
     """
 
     if (
@@ -109,19 +107,19 @@ def obtain_export_strategy(
     ):
         print()
         print(
-            "The model was loaded with quantization. Merging requires reloading the base model."
+            "該模型是以量化模式載入。進行合併需要重新載入原始基礎模型。"
         )
         print(
-            "[yellow]WARNING: CPU merging requires dequantizing the entire model to system RAM.[/]"
+            "[yellow]警告：在CPU上合併需要將整個模型還原至RAM。[/]"
         )
-        print("[yellow]This can lead to system freezes if you run out of memory.[/]")
+        print("[yellow]如果RAM不足，可能會當機。[/]")
 
         try:
-            # Estimate memory requirements by loading the model structure on the "meta" device.
-            # This doesn't consume actual RAM but allows us to inspect the parameter count/dtype.
+            # 透過meta載入模型結構，來預估所需的記憶體大小。
+            # 這不會消耗實際的RAM，但能讓我們檢查參數數量與資料類型。
             #
-            # Suppress warnings during meta device loading (e.g., "Some weights were not initialized").
-            # These are expected and harmless since we're only inspecting model structure, not running inference.
+            # 隱藏在meta裝置載入期間產生的警告（ex.某些權重未初始化）。
+            # 這些警告是預期中且無害的，因為我們只是在檢查模型結構，而不是要執行模型推論。
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 meta_model = get_model_class(settings.model).from_pretrained(
@@ -136,7 +134,7 @@ def obtain_export_strategy(
                 footprint_bytes = meta_model.get_memory_footprint()
                 footprint_gb = footprint_bytes / (1024**3)
                 print(
-                    f"[yellow]Estimated RAM required (excluding overhead): [bold]~{footprint_gb:.2f} GB[/][/]"
+                    f"[yellow]預估所需的RAM（不含額外開銷）：[bold]~{footprint_gb:.2f} GB[/][/]"
                 )
         except Exception:
             # Fallback if meta loading fails (e.g. owing to custom model code
