@@ -234,25 +234,25 @@ def run():
     reproduction_mode = settings.reproduce is not None
 
     if settings.reproduce is not None:
-        print(f"Loading reproduction information from [bold]{settings.reproduce}[/]...")
-        # FIXME: "Reproduction"/"reproducibility" name inconsistency!
+        print(f"正在從[bold]{settings.reproduce}[/]中載入重現用的資訊...")
+        # FIXME: 存在"Reproduction"與"reproducibility"的名稱命名不一致問題！
         reproduction_information = load_reproduction_information(settings.reproduce)
 
-        # Version 3 is the plugin-era schema, which stores generic scorer
-        # `scores`/`baseline_scores`. It is intentionally NOT compatible with the
-        # pre-plugin v1/v2 schema (hardcoded refusals/KL `metrics`), so those are
-        # rejected rather than silently failing on a missing key later.
+        # Version 3為外掛時代的模式，用於儲存通用的評分器scores與baseline_scores。
+        # 此版本刻意不相容外掛時代前的v1或v2的模式（當時採用寫死的拒絕機制與KL metrics），
+        # 故直接予以拒絕，避免後續因遺失key而導致程式無預警崩潰。
         if reproduction_information["version"] != "3":
             print(
                 (
-                    f"[red]Unsupported file format version: [bold]{reproduction_information['version']}[/].[/] "
-                    "This version of Heretic reads version 3 (plugin scorer) reproduce.json files. "
-                    "Older files were produced before the scorer-plugin refactor and are not supported. "
-                    "Please install Heretic 1.4 to use these files."
+                    f"[red]不支援的檔案格式版本：[bold]{reproduction_information['version']}[/]。[/] "
+                    "此版本僅支援讀取第 3 版（外掛評分器）的reproduce.json檔案。 "
+                    "舊版檔案是在評分器外掛重構前所產生，目前已不再支援。 "
+                    "若需使用在此以前的檔案，請安裝Heretic 1.4版本。"
                 )
             )
             return
 
+        # 檢查當前執行環境與重現檔案中的環境是否相符
         if not check_environment(settings, reproduction_information):
             return
 
@@ -262,6 +262,7 @@ def run():
 
     if settings.seed is None:
         settings.seed = random.randint(0, 2**32 - 1)
+        print(f"[cyan]隨機種子生成為[bold]{settings.seed}[/][/]")
 
     transformers.set_seed(settings.seed)
 
