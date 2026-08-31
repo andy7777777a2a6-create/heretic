@@ -325,31 +325,31 @@ def get_accelerator_info_dict() -> dict[str, Any]:
 
 
 def get_accelerator_info(include_warnings: bool = True) -> str:
-    """Convenience wrapper for hardware detection and console-friendly formatting."""
+    """用於硬體偵測與適合Console顯示的格式化輸出。"""
 
     info = get_accelerator_info_dict()
 
     if info["type"] is None:
-        suffix = " Operations will be slow." if include_warnings else ""
+        suffix = " 執行速度可能會受限。" if include_warnings else ""
         return (
-            f"[bold yellow]No GPU or other accelerator detected.{suffix}[/]\n".strip()
+            f"[bold yellow]未偵測到任何GPU或硬體加速器。{suffix}[/]\n".strip()
         )
 
     devices = info["devices"]
     count = len(devices)
     total_vram = sum(d.get("vram_gb", 0) for d in devices)
 
-    vram_suffix = f" ({total_vram:.2f} GB total VRAM)" if total_vram > 0 else ""
-    report = f"Detected [bold]{count or 1}[/] {info['type']} device(s){vram_suffix}\n"
+    vram_suffix = f" （總計{total_vram:f}GB VRAM）" if total_vram > 0 else ""
+    report = f"已偵測到[bold]{count or 1}[/]個{info['type']}裝置{vram_suffix}\n"
 
     if info.get("api_name") and info.get("api_version"):
-        report += f"{info['api_name']}: [bold]{info['api_version']}[/]\n"
+        report += f"{info['api_name']}：[bold]{info['api_version']}[/]\n"
 
     driver = info.get("driver_version") or "Unknown"
-    report += f"Driver Version: [bold]{driver}[/]\n"
+    report += f"驅動程式版本：[bold]{driver}[/]\n"
 
     for i, dev in enumerate(devices):
-        vram = f" ({dev['vram_gb']:.2f} GB)" if dev.get("vram_gb") else ""
+        vram = f" ({dev['vram_gb']:f}GB)" if dev.get("vram_gb") else ""
         report += f"* {info['type']} {i}: [bold]{dev['name']}[/]{vram}\n"
 
     return report.strip()
