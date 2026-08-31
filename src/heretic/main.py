@@ -134,7 +134,7 @@ def obtain_export_strategy(#匯出方法
                 footprint_bytes = meta_model.get_memory_footprint()
                 footprint_gb = footprint_bytes / (1024**3)
                 print(
-                    f"[yellow]預估所需的RAM（不含額外開銷）：[bold]~{footprint_gb:.2f} GB[/][/]"
+                    f"[yellow]預估所需的RAM（不含額外開銷）：[bold]~{footprint_gb:f} GB[/][/]"
                 )
         except Exception:
             # Fallback if meta loading fails (e.g. owing to custom model code
