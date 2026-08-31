@@ -137,13 +137,12 @@ def obtain_export_strategy(#匯出方法
                     f"[yellow]預估所需的RAM（不含額外開銷）：[bold]~{footprint_gb:f} GB[/][/]"
                 )
         except Exception:
-            # Fallback if meta loading fails (e.g. owing to custom model code
-            # or bitsandbytes quantization config issues on the meta device).
+            # meta裝置載入失敗時的備用方案（ex.由於自訂模型程式碼，或meta裝置上的bitsandbytes量化設定問題）。
             print(
-                "[yellow]Rule of thumb: You need approximately 3x the parameter count in GB RAM.[/]"
+                "[yellow]一般而言參數數量每多1B大約需要多3GB的RAM。[/]"
             )
             print(
-                "[yellow]Example: A 27B model requires ~80GB RAM. A 70B model requires ~200GB RAM.[/]"
+                "[yellow]ex.一個27B的模型大約需要81GB的RAM，一個70B的模型大約需要210GB的RAM。[/]"
             )
 
         print()
@@ -151,19 +150,19 @@ def obtain_export_strategy(#匯出方法
     return ask_if_unset(
         settings.export_strategy,
         questionary.select(
-            "How do you want to export the model?",
+            "請問如何匯出？",
             choices=[
                 Choice(
-                    title="Merge the abliteration LoRA and export the full model"
+                    title="合併至權重"
                     + (
                         ""
                         if settings.quantization == QuantizationMethod.NONE
-                        else " (requires sufficient RAM)"
+                        else "（需要足夠的RAM）"
                     ),
                     value=ExportStrategy.MERGE,
                 ),
                 Choice(
-                    title="Export the abliteration LoRA only (can be merged later)",
+                    title="導出LoRA(可以之後合併)",
                     value=ExportStrategy.ADAPTER,
                 ),
             ],
@@ -173,50 +172,49 @@ def obtain_export_strategy(#匯出方法
 
 
 def run():
-    # Enable expandable segments to reduce memory fragmentation on multi-GPU setups.
+    # 啟用可擴展區段以減少多GPU環境下的VRAM碎片化
     if (
         "PYTORCH_ALLOC_CONF" not in os.environ
         and "PYTORCH_CUDA_ALLOC_CONF" not in os.environ
     ):
         os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True"
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-    # Modified "Pagga" font from https://budavariam.github.io/asciiart-text/
-    print(f"[cyan]█░█░█▀▀░█▀▄░█▀▀░▀█▀░█░█▀▀[/]  v{version('heretic-llm')}")
+    # 修改自'Pagga'(https://budavariam.github.io/asciiart-text/)
+    print(f"[cyan]▄▀█░█▀▄░█░░░█░▀█▀░█▀▀░█▀▄░▄▀█░▀█▀░█░█▀█░█▄░█[/]  v{version('heretic-llm')}");
     print(
-        "[cyan]█▀█░█▀▀░█▀▄░█▀▀░░█░░█░█░░[/]  [blue underline]https://heretic-project.org[/]"
-    )
+        "[cyan]█▀█░█▀▄░█░░░█░░█░░█▀░░█▀▄░█▀█░░█░░█░█░█░█░▀█[/]  [blue underline]https://heretic-project.org[/]"
+    );
     print(
-        "[cyan]▀░▀░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀▀▀[/]  [blue underline]https://github.com/p-e-w/heretic[/]"
-    )
-    print()
+        "[cyan]▀░▀░▀▀░░▀▀▀░▀░░▀░░▀▀▀░▀░▀░▀░▀░░▀░░▀░▀▀▀░▀░░▀[/]  [blue underline]https://github.com[/]"
+    );
+    print();
 
     if (
-        # There is at least one argument (argv[0] is the program name).
+        # 確保有帶入至少一個參數（argv[0]是程式本身的名稱）。
         len(sys.argv) > 1
-        # Heretic is being invoked in standard (model processing) mode.
+        # 確保Heretic是在標準（模型處理）模式下執行。
         and "--collect-reproducibles" not in sys.argv
         and "--reproduce" not in sys.argv
-        # No model has been explicitly provided.
+        # 沒有明確指定--model。
         and "--model" not in sys.argv
-        # The last argument is a parameter value rather than a flag (such as "--help").
+        # 確保最後一個參數是參數值（如模型路徑），不是其他的（ex.--help）。
         and not sys.argv[-1].startswith("-")
     ):
-        # Assume the last argument is the model.
+        # 假設最後一個參數就是模型，並在其前方插入--model。
         sys.argv.insert(-1, "--model")
 
-    # Work around the "model" argument being required
-    # when Heretic is invoked in a non-processing mode.
+    # 避免當Heretic在非處理模式下被呼叫時系統依然會強制要求model參數。
     if (
         "--collect-reproducibles" in sys.argv or "--reproduce" in sys.argv
     ) and "--model" not in sys.argv:
         sys.argv.extend(["--model", ""])
 
     try:
-        # The required argument "model" must be provided by the user,
-        # either on the command line or in the configuration file.
+        # 使用者要透過命令列或設定檔提供必填的model參數。
         settings = Settings()  # ty:ignore[missing-argument]
     except ValidationError as error:
-        print(f"[red]Configuration contains [bold]{error.error_count()}[/] errors:[/]")
+        print(f"[red]設定檔或參數包含[bold]{error.error_count()}[/]個錯誤：[/]")
 
         for error_details in error.errors():
             print(
@@ -225,7 +223,7 @@ def run():
 
         print()
         print(
-            "Run [bold]heretic --help[/] or see [bold]config.default.toml[/] for details about configuration parameters."
+            "請執行[bold]heretic --help[/]或參閱[bold]config.default.toml[/]以取得設定參數的詳細資訊"
         )
         return
 
