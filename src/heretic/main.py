@@ -270,6 +270,7 @@ def run():
 
     if settings.print_debug_information:
         print()
+        # 印出目前 PyTorch 二進位檔編譯時的完整環境組態（如編譯器版本、啟用哪些硬體優化等）
         print(torch.__config__.show().strip())
         print()
         print(
@@ -280,27 +281,28 @@ def run():
             f"torch.get_num_interop_threads() = [bold]{torch.get_num_interop_threads()}[/]"
         )
 
-    # We don't need gradients as we only do inference.
+    # 由於我們只進行推論，因此完全不需要計算梯度
     torch.set_grad_enabled(False)
 
-    # While determining the optimal batch size, we will try many different batch sizes,
-    # resulting in many computation graphs being compiled. Raising the limit (default = 8)
-    # avoids errors from TorchDynamo assuming that something is wrong because we
-    # recompile too often.
+    # 在尋找最佳Batch Size的過程中，我們會嘗試許多不同的Batch Size，這會導致大量不同的圖重新編譯。
+    # 提高此上限（預設值為8）可以避免TorchDynamo誤判我們編譯過於頻繁而報錯。
     torch._dynamo.config.cache_size_limit = 64
 
+    # 原注釋{
     # Silence warning spam from Transformers.
     # In my entire career I've never seen a useful warning from that library.
-    transformers.logging.set_verbosity_error()
+    #}
+    #transformers.logging.set_verbosity_error()<-原本有
 
+    # 原注釋{
     # Another library that generates warning spam.
-    logging.getLogger("lm_eval").setLevel(logging.ERROR)
+    #}
+    #logging.getLogger("lm_eval").setLevel(logging.ERROR)<-原本有
 
-    # We do our own trial logging, so we don't need the INFO messages
-    # about parameters and results.
+    # 我們會自己記錄實驗過程的Log，因此不需要它輸出關於參數與結果的INFO訊息。
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-    # Silence the warning about multivariate TPE being experimental.
+    # 隱藏關於Multivariate TPE仍處於實驗性階段的警告。
     warnings.filterwarnings("ignore", category=ExperimentalWarning)
 
     os.makedirs(settings.study_checkpoint_dir, exist_ok=True)
@@ -334,16 +336,16 @@ def run():
                 print()
                 print(
                     (
-                        "[green]You have already processed this model.[/] "
-                        "You can show the results from the previous run, allowing you to export models or to run additional trials. "
-                        "Alternatively, you can ignore the previous run and start from scratch. "
-                        "This will delete the checkpoint file and all results from the previous run."
+                        "[green]先前似乎已經處理過此模型。[/] "
+                        "可以選擇檢視上一次的執行結果並直接進行模型匯出或追加額外的測試。 "
+                        "或者也可以忽略上一次的進度並重頭開始。 "
+                        "(註：重頭開始將會刪除既有的檢查點檔案以及上一次的所有執行結果。)"
                     )
                 )
 
             choices.append(
                 Choice(
-                    title="Show the results from the previous run",
+                    title="檢視上一次的執行結果並繼續",
                     value="continue",
                 )
             )
@@ -352,30 +354,30 @@ def run():
                 print()
                 print(
                     (
-                        "[yellow]You have already processed this model, but the run was interrupted.[/] "
-                        "You can continue the previous run from where it stopped. This will override any specified settings. "
-                        "Alternatively, you can ignore the previous run and start from scratch. "
-                        "This will delete the checkpoint file and all results from the previous run."
+                        "[yellow]先前似乎已經處理過此模型，但執行過程遭到中斷。[/] "
+                        "可以選擇從上次停止的地方繼續執行，這將會自動覆寫當前指定的參數設定。 "
+                        "或者也可以忽略上一次的進度並重頭開始。 "
+                        "(註：重頭開始將會刪除既有的檢查點檔案以及上一次的所有執行結果。)"
                     )
                 )
 
             choices.append(
                 Choice(
-                    title="Continue the previous run",
+                    title="從中斷點繼續上一次的執行進度",
                     value="continue",
                 )
             )
 
         choices.append(
             Choice(
-                title="Ignore the previous run and start from scratch",
+                title="忽略上一次進度並重頭開始",
                 value="restart",
             )
         )
 
         choices.append(
             Choice(
-                title="Exit program",
+                title="離開",
                 value="",
             )
         )
